@@ -17,7 +17,7 @@ export SEED_PASSWORD="seed test password"
 BP_WALLET_FEATURES="--features=cli,hot"
 BP_WALLET_VER="0.11.1-alpha.2"
 RGB_CMD_FEATURES=""
-RGB_CMD_VER="0.11.1-rc.5"
+RGB_CMD_VER="0.11.1-rc.6"
 
 # closing method / derivation variables
 CLOSING_METHODS=("opret1st" "tapret1st")

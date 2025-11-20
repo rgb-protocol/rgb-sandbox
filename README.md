@@ -2,7 +2,7 @@ RGB Sandbox
 ===
 
 ## Introduction
-This is an RGB sandbox and demo based on RGB version 0.11.1 RC 5.
+This is an RGB sandbox and demo based on RGB version 0.11.1 RC 6.
 
 The underlying Bitcoin network is `regtest`.
 
@@ -160,7 +160,7 @@ cargo install bp-wallet --version 0.11.1-alpha.2 --root ./bp-wallet --features=c
 RGB functionality will be handled with `rgb-cmd`. We install its CLI to the
 `rgb-cmd` directory inside the project directory:
 ```sh
-cargo install rgb-cmd --version 0.11.1-rc.5 --root ./rgb-cmd
+cargo install rgb-cmd --version 0.11.1-rc.6 --root ./rgb-cmd
 ```
 
 ### Demo
