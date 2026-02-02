@@ -1,13 +1,13 @@
 services:
   bitcoind:
     profiles: [electrum]
-    image: registry.gitlab.com/hashbeam/docker/bitcoind:28.1
+    image: registry.gitlab.com/hashbeam/docker/bitcoind:30.2
     command: "-fallbackfee=0.0002"
     volumes:
       - ./datacore:/srv/app/.bitcoin
   electrs:
     profiles: [electrum]
-    image: registry.gitlab.com/hashbeam/docker/electrs:0.10.9
+    image: registry.gitlab.com/hashbeam/docker/electrs:0.11.0
     depends_on:
       - bitcoind
     ports:
