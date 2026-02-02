@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+# check bash version compatibility
+if [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
+    echo "ERROR: Bash 4.0+ required (running $BASH_VERSION)"
+    exit 1
+fi
+
 # variables
 CONTRACT_DIR="contracts"
 DEBUG=0
@@ -128,7 +134,7 @@ _wait_indexers_sync() {
         electrum_json="{\"jsonrpc\": \"2.0\", \"method\": \"blockchain.block.header\", \"params\": [$block_count], \"id\": 0}"
         while :; do
             electrum_res="$(echo "$electrum_json" \
-                | netcat -w1 localhost $ELECTRUM_PORT \
+                | nc -w1 localhost $ELECTRUM_PORT \
                 | jq '.result')"
             [ -n "$electrum_res" ] && break
             echo -n "."
@@ -224,10 +230,10 @@ check_schemas_version() {
 
 check_tools() {
     _subtit "checking required tools"
-    local required_tools="awk base64 cargo cut docker grep head jq netcat sha256sum tr"
+    local required_tools="awk base64 cargo cut docker grep head jq nc sha256sum tr"
     for tool in $required_tools; do
         if ! which "$tool" >/dev/null; then
-            _die "could not find reruired tool \"$tool\", please install it and try again"
+            _die "could not find required tool \"$tool\", please install it and try again"
         fi
     done
     if ! docker compose >/dev/null; then
@@ -310,7 +316,7 @@ start_services() {
     [ "$PROFILE" = "electrum" ] && EXPOSED_PORTS=(50001)
     [ "$PROFILE" = "esplora" ] && EXPOSED_PORTS=(8094)
     for port in "${EXPOSED_PORTS[@]}"; do
-        if netcat -z localhost "$port"; then
+        if nc -z localhost "$port"; then
             _die "port $port is already bound, services can't be started"
         fi
     done
@@ -615,7 +621,7 @@ transfer_create() {
     fi
     _log "invoice: $INVOICE"
 
-    ## RGB tansfer
+    ## RGB transfer
     _subtit "(sender) preparing RGB transfer"
     CONSIGNMENT="consignment_${TRANSFER_NUM}.rgb"
     PSBT=tx_${TRANSFER_NUM}.psbt
