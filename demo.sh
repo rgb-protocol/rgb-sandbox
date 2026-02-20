@@ -73,9 +73,9 @@ _subtit() {
 }
 
 _tit() {
-    S="$*"              # string
-    B=50                # buffer
-    P=$(((B-${#S})/2))  # padding
+    S="$*"                 # string
+    B=50                   # buffer
+    P=$(((B - ${#S}) / 2)) # padding
     [ $P -lt 0 ] && P=0
     printf "\n${C1}==== %${P}s%s%${P}s ====${NC}\n" "" "$S" ""
 }
@@ -130,7 +130,6 @@ _wait_indexers_sync() {
     block_count=$("${BCLI[@]}" getblockcount)
     if [ "$PROFILE" = "electrum" ]; then
         local electrum_json electrum_res
-        # shellcheck disable=2089
         electrum_json="{\"jsonrpc\": \"2.0\", \"method\": \"blockchain.block.header\", \"params\": [$block_count], \"id\": 0}"
         while :; do
             electrum_res="$(echo "$electrum_json" \
@@ -220,11 +219,10 @@ _show_state() {
         state -w "$wallet" -a "${sync[@]}" "$contract_id"
 }
 
-
 # helper functions
 check_schemas_version() {
     if ! sha256sum -c --status rgb-schemas.sums; then
-        _die "rgb-schemas version mismatch (hint: try \"git submodule update\")"
+        _die 'rgb-schemas version mismatch (hint: try "git submodule update")'
     fi
 }
 
@@ -256,10 +254,10 @@ install_rust_crate() {
     local version="$2"
     local features opts
     if [ -n "$3" ]; then
-        read -r -a features <<< "$3"
+        read -r -a features <<<"$3"
     fi
     if [ -n "$4" ]; then
-        read -r -a opts <<< "$4"
+        read -r -a opts <<<"$4"
     fi
     _subtit "installing $crate to ./$crate"
     cargo install "$crate" --version "$version" --locked \
@@ -267,12 +265,10 @@ install_rust_crate() {
         || _die "error installing $crate"
 }
 
-# shellcheck disable=2034
 set_aliases() {
     _subtit "setting command aliases"
     BITCOIND_CLI=("docker" "compose" "exec" "-T" "-u" "blits" "bitcoind" "bitcoin-cli" "-regtest")
     BPHOT=("bp-wallet/bin/bp-hot")
-    BP=("bp-wallet/bin/bp")
     ESPLORA_CLI=("docker" "compose" "exec" "-T" "esplora" "cli")
     INDEXER_CLI="$INDEXER_OPT=$INDEXER_ENDPOINT"
     RGB=("rgb-cmd/bin/rgb" "-n" "$NETWORK" "$INDEXER_CLI")
@@ -286,7 +282,7 @@ set_aliases() {
 stop_services() {
     _subtit "stopping services"
     # cleanly stop esplora
-    if $COMPOSE ps |grep -q esplora; then
+    if $COMPOSE ps | grep -q esplora; then
         for SRV in socat electrs; do
             $COMPOSE exec esplora bash -c "sv -w 60 force-stop /etc/service/$SRV"
         done
@@ -299,16 +295,16 @@ stop_services() {
 start_services() {
     _subtit "checking data directories"
     for data_dir in data0 data1 data2; do
-       if [ -d "$data_dir" ]; then
-           if [ "$(stat -c %u $data_dir)" = "0" ]; then
-               echo "existing data directory \"$data_dir\" found, owned by root"
-               echo "please remove it and try again (e.g. 'sudo rm -r $data_dir')"
-               _die "cannot continue"
-           fi
-           echo "existing data directory \"$data_dir\" found, removing"
-           rm -r $data_dir
-       fi
-       mkdir -p "$data_dir"
+        if [ -d "$data_dir" ]; then
+            if [ "$(stat -c %u $data_dir)" = "0" ]; then
+                echo "existing data directory \"$data_dir\" found, owned by root"
+                echo "please remove it and try again (e.g. 'sudo rm -r $data_dir')"
+                _die "cannot continue"
+            fi
+            echo "existing data directory \"$data_dir\" found, removing"
+            rm -r $data_dir
+        fi
+        mkdir -p "$data_dir"
     done
     stop_services
     _subtit "checking bound ports"
@@ -336,21 +332,20 @@ start_services() {
     start_time=$(date +%s)
     if [ "$PROFILE" = "electrum" ]; then
         # bitcoind
-        until docker compose logs bitcoind |grep -q "Bound to"; do
+        until docker compose logs bitcoind | grep -q "Bound to"; do
             _check_time "$start_time" "$(date +%s)" bitcoind
             sleep 1
         done
     fi
     if [ "$PROFILE" = "esplora" ]; then
         # esplora
-        until docker compose logs esplora |grep -q "run: nginx:"; do
+        until docker compose logs esplora | grep -q "run: nginx:"; do
             _check_time "$start_time" "$(date +%s)" esplora
             sleep 1
         done
     fi
     echo " done"
 }
-
 
 # main functions
 check_balance() {
@@ -451,7 +446,7 @@ issue_contract() {
         -e "s/issued_supply/2000/" \
         -e "s/txid/$TXID_ISSUE/" \
         -e "s/vout/$VOUT_ISSUE/" \
-        "$contract_tmpl" > "$contract_yaml"
+        "$contract_tmpl" >"$contract_yaml"
     _subtit "issuing"
     _trace "${RGB[@]}" -d "data${wallet_id}" issue -w "$wallet" \
         "ssi:$wallet" "$contract_yaml" >$TRACE_OUT 2>&1
@@ -499,7 +494,7 @@ prepare_rgb_wallet() {
     [ $DEBUG = 1 ] && echo "descriptor: ${DESC_MAP[$wallet]}"
     WALLETS+=("$wallet")
     WLT_ID_MAP[$wallet]=$WALLET_NUM
-    ((WALLET_NUM+=1))
+    ((WALLET_NUM += 1))
     WLT_CM_MAP[$wallet]=$method
     # RGB setup
     _subtit "creating RGB wallet $wallet"
@@ -549,8 +544,8 @@ sign_and_broadcast() {
 }
 
 transfer_assets() {
-    transfer_create "$@"    # parameter pass-through
-    transfer_complete       # uses global variables set by transfer_create
+    transfer_create "$@" # parameter pass-through
+    transfer_complete    # uses global variables set by transfer_create
     # unset global variables set by transfer operations
     unset BALANCE CONSIGNMENT PSBT XFER_CONTRACT_NAME
     unset BLNC_RCPT BLNC_SEND RCPT_WLT SEND_WLT
@@ -558,27 +553,27 @@ transfer_assets() {
 
 transfer_create() {
     ## params
-    local wallets="$1"          # sender>receiver wallet names
-    local balances_start="$2"   # expected sender/recipient starting balances
-    local send_amt="$3"         # amount to be transferred
-    local balances_final="$4"   # expected sender/recipient final balances
-    local witness="$5"          # 1 for witness txid, blinded UTXO otherwise
-    local reuse_invoice="$6"    # 1 to re-use the previous invoice
-    XFER_CONTRACT_NAME="$7"     # contract name
+    local wallets="$1"        # sender>receiver wallet names
+    local balances_start="$2" # expected sender/recipient starting balances
+    local send_amt="$3"       # amount to be transferred
+    local balances_final="$4" # expected sender/recipient final balances
+    local witness="$5"        # 1 for witness txid, blinded UTXO otherwise
+    local reuse_invoice="$6"  # 1 to re-use the previous invoice
+    XFER_CONTRACT_NAME="$7"   # contract name
 
     ## data variables
     local contract_id rcpt_data rcpt_id send_data send_id
     local blnc_send blnc_rcpt
     local schema
-    SEND_WLT=$(echo "$wallets" |cut -d/ -f1)
-    RCPT_WLT=$(echo "$wallets" |cut -d/ -f2)
+    SEND_WLT=$(echo "$wallets" | cut -d/ -f1)
+    RCPT_WLT=$(echo "$wallets" | cut -d/ -f2)
     send_id=${WLT_ID_MAP[$SEND_WLT]}
     rcpt_id=${WLT_ID_MAP[$RCPT_WLT]}
     contract_id=${CONTRACT_ID_MAP[$XFER_CONTRACT_NAME]}
     send_data="data${send_id}"
     rcpt_data="data${rcpt_id}"
-    blnc_send=$(echo "$balances_start" |cut -d/ -f1)
-    blnc_rcpt=$(echo "$balances_start" |cut -d/ -f2)
+    blnc_send=$(echo "$balances_start" | cut -d/ -f1)
+    blnc_rcpt=$(echo "$balances_start" | cut -d/ -f2)
     schema=${CONTRACT_SCHEMA_MAP[$XFER_CONTRACT_NAME]}
 
     ## starting situation
@@ -590,15 +585,15 @@ transfer_create() {
     _subtit "initial balances"
     [ "$SKIP_INITIAL_SEND_CHECK_BALANCE" != 1 ] && check_balance "$SEND_WLT" "$blnc_send" "$XFER_CONTRACT_NAME" 1
     [ "$SKIP_INITIAL_RCPT_CHECK_BALANCE" != 1 ] && check_balance "$RCPT_WLT" "$blnc_rcpt" "$XFER_CONTRACT_NAME" 1
-    BLNC_SEND=$((blnc_send-send_amt))
-    BLNC_RCPT=$((blnc_rcpt+send_amt))
+    BLNC_SEND=$((blnc_send - send_amt))
+    BLNC_RCPT=$((blnc_rcpt + send_amt))
     [ -n "$CUSTOM_BLNC_RCPT" ] && BLNC_RCPT=$CUSTOM_BLNC_RCPT
-    blnc_send=$(echo "$balances_final" |cut -d/ -f1)
-    blnc_rcpt=$(echo "$balances_final" |cut -d/ -f2)
-    [ "$BLNC_SEND" = "$blnc_send" ] || \
-        _die "expected final sender balance $BLNC_SEND differs from the provided $blnc_send (transfer $TRANSFER_NUM)"
-    [ "$BLNC_RCPT" = "$blnc_rcpt" ] || \
-        _die "expected final recipient balance $BLNC_RCPT differs from the provided $blnc_rcpt (transfer $TRANSFER_NUM)"
+    blnc_send=$(echo "$balances_final" | cut -d/ -f1)
+    blnc_rcpt=$(echo "$balances_final" | cut -d/ -f2)
+    [ "$BLNC_SEND" = "$blnc_send" ] \
+        || _die "expected final sender balance $BLNC_SEND differs from the provided $blnc_send (transfer $TRANSFER_NUM)"
+    [ "$BLNC_RCPT" = "$blnc_rcpt" ] \
+        || _die "expected final recipient balance $BLNC_RCPT differs from the provided $blnc_rcpt (transfer $TRANSFER_NUM)"
 
     ## generate invoice
     local address_mode
@@ -611,7 +606,6 @@ transfer_create() {
             address_mode=""
         fi
         # not quoting $address_mode so it doesn't get passed as "" if empty
-        # shellcheck disable=2086
         _trace "${RGB[@]}" -d "$rcpt_data" invoice $address_mode \
             -w "$RCPT_WLT" --amount "$send_amt" "$contract_id" \
             >$TRACE_OUT
@@ -705,7 +699,7 @@ transfer_complete() {
     check_balance "$RCPT_WLT" "$BLNC_RCPT" "$XFER_CONTRACT_NAME" 1
 
     # increment transfer number
-    ((TRANSFER_NUM+=1))
+    ((TRANSFER_NUM += 1))
 }
 
 base64_file_nowrap() {
@@ -716,7 +710,6 @@ base64_file_nowrap() {
     #   $1: File path to be encoded
     cat "$1" | base64 | tr -d '\r\n'
 }
-
 
 # cmdline arguments
 help() {
@@ -732,18 +725,18 @@ help() {
 
 while [ -n "$1" ]; do
     case $1 in
-        -h|--help)
+        -h | --help)
             help
             exit 0
             ;;
-        -l|--list)
+        -l | --list)
             echo -n "available scenarios: "
             grep '^scenario_[0-9]\+\(\)' "$0" \
                 | sed -e 's/^scenario_//' -e 's/() {.*//' \
                 | xargs echo
             exit 0
             ;;
-        -s|--scenario)
+        -s | --scenario)
             SCENARIO_NUM="$2"
             SCENARIO="scenario_$SCENARIO_NUM"
             shift
@@ -752,7 +745,7 @@ while [ -n "$1" ]; do
             stop_services
             exit 0
             ;;
-        -v|--verbose)
+        -v | --verbose)
             DEBUG=1
             ;;
         --esplora)
@@ -767,12 +760,11 @@ while [ -n "$1" ]; do
     esac
     shift
 done
-[ -z "$SCENARIO" ] && SCENARIO="scenario_0"  # default
+[ -z "$SCENARIO" ] && SCENARIO="scenario_0" # default
 # check if the selected scenario is available
 if ! grep -q "${SCENARIO}()" "$0"; then
     _die "scenario $SCENARIO_NUM not available"
 fi
-
 
 # initial setup
 _tit "setting up"
@@ -793,11 +785,10 @@ else
     _subtit "skipping services start"
 fi
 
-
 # scenario definitions
 
 ## full round of opret transfers
-scenario_0() {  # default
+scenario_0() { # default
     local method="opret1st"
     # wallets
     prepare_rgb_wallet wallet_0 $method
