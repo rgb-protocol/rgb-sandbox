@@ -29,7 +29,7 @@ procedure will be different each time.
 Clone the repository, including (shallow) submodules and change to the
 newly-created directory:
 ```sh
-git clone https://github.com/RGB-Tools/rgb-sandbox --recurse-submodules --shallow-submodules
+git clone https://github.com/rgb-protocol/rgb-sandbox --recurse-submodules --shallow-submodules
 cd rgb-sandbox
 ```
 
